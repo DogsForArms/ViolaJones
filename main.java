@@ -23,6 +23,7 @@ import java.io.*;
 
 import javax.imageio.ImageIO;
 
+
 import java.util.*;
 import java.util.logging.*;
 /*
@@ -41,10 +42,12 @@ public class main {
 	{
 		public int featureNumber;
 		public float alpha;
+		public float threshold;
 		
-		public SlimFeature(int featureNumber, float alpha)
+		public SlimFeature(int featureNumber, float threshold, float alpha)
 		{
 			this.featureNumber = featureNumber;
+			this.threshold = threshold;
 			this.alpha = alpha;
 		}
 	}
@@ -54,7 +57,8 @@ public class main {
      */
     public static void main(String[] args) 
     {
-        testAdaBoost(10);
+//        testAdaBoost(50);
+    	testStaticFeatureList();
 //    	
 //    	ViolaJones vj = new ViolaJones();
 //    	Vector<HaarFeature> hf = vj.getHaarFeatures();
@@ -99,50 +103,102 @@ public class main {
             loadGifsAtDirectoryIntoVector(trueSet, yesDirectory);
         }
         
-        Vector<SlimFeature> slimFeatures = new Vector<SlimFeature>();
-        slimFeatures.add(new SlimFeature(97108, 1.5248452f));
-        slimFeatures.add(new SlimFeature(109917,  1.1500407f));
-        slimFeatures.add(new SlimFeature(90112, 0.72876203f));
-        slimFeatures.add(new SlimFeature(6877, 0.6615829f));
-        slimFeatures.add(new SlimFeature(137874,  0.6527973f));
-        slimFeatures.add(new SlimFeature(111513, 0.57696515f));
-        slimFeatures.add(new SlimFeature(81013, 0.5661316f));
-        slimFeatures.add(new SlimFeature(15607,  0.549178f));
-        slimFeatures.add(new SlimFeature(134897, 0.5285298f));
-        slimFeatures.add(new SlimFeature(101997,  0.5084175f));
+        HaarFeatureChain hfc = new HaarFeatureChain();
+        Vector<HaarFeature> features = hfc.load();
+
         
         System.out.println("\ntest "+trueSet.size()+" positives!");
-    	testTargetFeaturesAgainstImages(slimFeatures, trueSet);
+    	testTargetFeaturesAgainstImages(features, trueSet);
     	
     	
         System.out.println("\ntest "+falseSet.size()+" negatives!");
-    	testTargetFeaturesAgainstImages(slimFeatures, falseSet);
+    	testTargetFeaturesAgainstImages(features, falseSet);
     }
 
-    private static void testTargetFeaturesAgainstImages(Vector<SlimFeature> slimFeatures, Vector<IntegralImage> images)
-    {
-    	ViolaJones vj = new ViolaJones();
-    	Vector<HaarFeature> allFeatures = vj.getHaarFeatures();
-    	
+    public static void testTargetFeaturesAgainstImages(Vector<HaarFeature> features, Vector<IntegralImage> images)
+    {    	
+    	int numberOfTrue = 0;
+    	int numberOfFalse = 0;
     	
     	for (IntegralImage ii : images)
     	{
     		float weightSum = 0.0f;
         	float sum = 0.0f;
-    		for (SlimFeature slimFeature : slimFeatures)
+    		for (HaarFeature hf : features)
     		{
-    			HaarFeature hf = allFeatures.get(slimFeature.featureNumber);
-    			
-    			float v = slimFeature.alpha*ii.evaluate(hf);
+//    			HaarFeature hf = allFeatures.get(slimFeature.featureNumber);
+//    			hf.threshold = slimFeature.threshold;
+    			float v = hf.weight*ii.evaluateAsClassifier(hf);
     			sum += v;
-    			weightSum += slimFeature.alpha;
+    			weightSum += hf.weight;
+    			
     		}
     		
     		boolean success = (sum >= weightSum*0.5f);
-    		System.out.println("image " + ii.name + " is a " +  success + " : " + sum + " > " + weightSum*0.5f);
+//    		System.out.println("image " + ii.name + " is a " +  success + " : " + sum + " > " + weightSum*0.5f);
+    		if (success)
+    		{
+    			numberOfTrue ++;
+    		} else
+    		{
+    			numberOfFalse ++;
+    		}
     	}
+		System.out.println("*************");
+		System.out.println("true: " + numberOfTrue);
+		System.out.println("false: " + numberOfFalse);
+		
+		int min = Math.min(numberOfFalse, numberOfTrue);
+		int max = Math.max(numberOfFalse, numberOfTrue);
+		
+		float percentError = min*100.0f/max;
+		System.out.println("percentError = " + percentError);
     	
     }
+    
+//    private static void testTargetFeaturesAgainstImages(Vector<SlimFeature> slimFeatures, Vector<IntegralImage> images)
+//    {
+//    	ViolaJones vj = new ViolaJones();
+//    	Vector<HaarFeature> allFeatures = vj.getHaarFeatures();
+//    	
+//    	int numberOfTrue = 0;
+//    	int numberOfFalse = 0;
+//    	
+//    	for (IntegralImage ii : images)
+//    	{
+//    		float weightSum = 0.0f;
+//        	float sum = 0.0f;
+//    		for (SlimFeature slimFeature : slimFeatures)
+//    		{
+//    			HaarFeature hf = allFeatures.get(slimFeature.featureNumber);
+//    			hf.threshold = slimFeature.threshold;
+//    			float v = slimFeature.alpha*ii.evaluateAsClassifier(hf);
+//    			sum += v;
+//    			weightSum += slimFeature.alpha;
+//    			
+//    		}
+//    		
+//    		boolean success = (sum >= weightSum*0.5f);
+////    		System.out.println("image " + ii.name + " is a " +  success + " : " + sum + " > " + weightSum*0.5f);
+//    		if (success)
+//    		{
+//    			numberOfTrue ++;
+//    		} else
+//    		{
+//    			numberOfFalse ++;
+//    		}
+//    	}
+//		System.out.println("*************");
+//		System.out.println("true: " + numberOfTrue);
+//		System.out.println("false: " + numberOfFalse);
+//		
+//		int min = Math.min(numberOfFalse, numberOfTrue);
+//		int max = Math.max(numberOfFalse, numberOfTrue);
+//		
+//		float percentError = min*100.0f/max;
+//		System.out.println("percentError = " + percentError);
+//    	
+//    }
     
     private static void loadGifsAtDirectoryIntoVector(Vector<IntegralImage> images, File directory)
     {
@@ -200,7 +256,11 @@ public class main {
         
         AdaBoost boost = new AdaBoost();
         Vector<HaarFeature> bestFeatures = boost.startTraining(trueSet, falseSet, allFeatures, features);
-        System.out.println("done learnin!! Wow!");
+        
+        HaarFeatureChain chain = new HaarFeatureChain();
+        chain.save(bestFeatures);
+        
+        System.out.println("dun learnin!! Wow!");
     }
     
 

@@ -57,7 +57,7 @@ public class AdaBoost
         	}
         	System.out.print("|\n\t");
             
-        	//maybe I want to delete teh last one in teh case that this is a new dataset, remember to delete tmp
+        	//maybe I want to delete the last one in the case that this is a new dataset, remember to delete tmp
 	        for (int i = 0; i < features.size(); i++)
 	        {
 	            Vector<Triple> tmp = new Vector<Triple>();
@@ -161,6 +161,7 @@ public class AdaBoost
 			
             
 				Vector<Triple> bestFeatureVector = featureValue.get(bestFeature);
+				//boost the negatives, based on determined threshold
                 for(int k=0; k < bestFeatureVector.size(); k++) 
                 {
 					Triple triple = bestFeatureVector.get(k);

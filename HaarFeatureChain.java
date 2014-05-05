@@ -1,3 +1,5 @@
+import ij.IJ;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -10,55 +12,48 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.Vector;
 
 
-
-
-
-public class FeatureValue 
+public class HaarFeatureChain implements Serializable
 {
-	static String nameOfTemporaryFolder = "/tmp";
-	File tmpDirectory;
-	int i = 0;
+	Vector<HaarFeature> haarFeatures;
 	
-	private boolean tmpDirectoryWasSetup = false;
-	public FeatureValue()
+	static String nameOfTemporaryFolder = "/features/";
+	File tmpDirectory;
+
+	public HaarFeatureChain()
 	{
 		String path =  new File("").getAbsolutePath();
 		path += nameOfTemporaryFolder;
-		System.out.println("featurevalue path = " + path);
+		System.out.println("haarfeaturechain path = " + path);
 		this.tmpDirectory = new File(path);
-		if (tmpDirectory.exists())
+		if (this.tmpDirectory.exists())
 		{
-			tmpDirectoryWasSetup = true;
-//			System.out.println("deleting tmp directory '" + tmpDirectory + "'");
-//			tmpDirectory.delete();
+			tmpDirectory.delete();	
 		} else
 		{
 			tmpDirectory.mkdir();
 		}
-
-//		System.out.println("Writing vector [" + i + "] to file");
-//		tmpDirectory.mkdir();
+	}
+	private String location()
+	{
+		String location = tmpDirectory.getAbsolutePath()+ "\\" +"features.ser";
+		IJ.log("directory = " + location);
+		return location;
+	}
+	public void save(Vector<HaarFeature> features)
+	{
 		
-	}
-	
-	public boolean tmpDirectoryAlreadyExists()
-	{
-		return tmpDirectoryWasSetup;
-	}
-	
-	public void add(Vector<Triple> testList)
-	{
 		try
 		{
-			OutputStream file = new FileOutputStream(streamLocationForArrayList(i));
+			OutputStream file = new FileOutputStream(location());
 			OutputStream buffer = new BufferedOutputStream(file);
 			ObjectOutput output = new ObjectOutputStream(buffer);
 			try
 			{
-				output.writeObject(testList);
+				output.writeObject(features);
 			} finally
 			{
 				output.close();
@@ -67,21 +62,20 @@ public class FeatureValue
 		{
 			System.out.println("Cannot perform output." + ex);
 		}
-		i++;
 	}
 	
-	public Vector<Triple> get(int index)
+	public Vector<HaarFeature> load()
 	{
-		Vector<Triple> recoveredQuarks = null;
+		Vector<HaarFeature> recoveredQuarks = null;
 		try
 		{
-			InputStream file = new FileInputStream(streamLocationForArrayList(index));
+			InputStream file = new FileInputStream(location());
 			InputStream buffer = new BufferedInputStream(file);
 			ObjectInput input = new ObjectInputStream(buffer);
 			
 			try
 			{
-				recoveredQuarks = (Vector<Triple>)input.readObject();
+				recoveredQuarks = (Vector<HaarFeature>)input.readObject();
 			} finally
 			{
 				input.close();
@@ -96,11 +90,4 @@ public class FeatureValue
 	    }
 		return recoveredQuarks;
 	}
-
-	public String streamLocationForArrayList(int index)
-	{
-		String path = tmpDirectory.getAbsolutePath()+ "\\" +index+".ser";
-		return path;
-	}
-	
 }

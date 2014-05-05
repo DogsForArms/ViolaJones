@@ -184,11 +184,15 @@ public class ViolaJones
             }
             tmpD = errP/(double)negativeTest.size();
 		
-            if(tmpD < minD+1e-9) 
+            if(tmpD < minD+1e-9)
+            {
                 up = mid-1;
+            }
             else 
+            {
                 down = mid;
-	}
+            }
+        }
     }
     
 
@@ -223,7 +227,6 @@ public class ViolaJones
                 for (height = sizeY; height < frameSize; height+=sizeY) 
                 {
                     /* each possible position given size */
-                	//UNDO THIS AFTER TESTS
                     for (x = 0; x+width < frameSize; x++) 
                     {
                         for (y = 0; y+height < frameSize; y++) 
@@ -232,8 +235,6 @@ public class ViolaJones
                             count++;
                             HaarFeature hr = new HaarFeature(x,y,sizeX,sizeY,width,height, currentFeature.getPixels());
                             featureVector.add(hr);
-                        
-                        
                         }
                     }
                 }

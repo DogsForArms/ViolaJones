@@ -32,10 +32,12 @@ public class ViolaJones_Plugin implements PlugInFilter
 	{
 		public int featureNumber;
 		public float alpha;
+		public float threshold;
 		
-		public SlimFeature(int featureNumber, float alpha)
+		public SlimFeature(int featureNumber, float threshold, float alpha)
 		{
 			this.featureNumber = featureNumber;
+			this.threshold = threshold;
 			this.alpha = alpha;
 		}
 	}
@@ -50,64 +52,63 @@ public class ViolaJones_Plugin implements PlugInFilter
     public void run(ImageProcessor imageProcessor)
     {
         
+        IntegralImage ii = new IntegralImage(imageProcessor);
+
+        Vector<HaarFeature> strongClassifier = (new HaarFeatureChain()).load();
         ImageStack imageStack = new ImageStack(imageProcessor.getWidth(), imageProcessor.getHeight());
         
-        Vector<SlimFeature> slimFeatures = new Vector<SlimFeature>();
-        slimFeatures.add(new SlimFeature(40058, 1.6034545f));
-        slimFeatures.add(new SlimFeature(16168,  1.580527f));
-        slimFeatures.add(new SlimFeature(6779, 1.4456567f));
-        slimFeatures.add(new SlimFeature(11172, 1.3725158f));
-        slimFeatures.add(new SlimFeature(2048,  1.2100765f));
+        for (HaarFeature weakClassifier : strongClassifier)
+        {
+        	ByteProcessor bp = imageProcessorForFeature(weakClassifier, imageProcessor);
+        	imageStack.addSlice("weakClassifier ", bp);
+        	
+        }
         
-        ViolaJones vj = new ViolaJones();
-        Vector<HaarFeature> hfs = vj.getHaarFeatures();
-        IntegralImage ii = new IntegralImage(imageProcessor);
-        int j = 0;
-        Vector<Triple> triples = new Vector<Triple>();
-//        for (HaarFeature haarFeature : hfs)
-//        {
-////        	IJ.log("evaluating feature# " + j );
-//        	int val = ii.evaluate(haarFeature);
-//        	triples.add(new Triple(j, val, true));
-//        	j++;
-//        }
-//        Collections.sort(triples);
-//        
-//        for (int ok = triples.size()-1; ok >= 0; ok--)
-//        {
-//        	Triple triple = triples.get(ok);
-//        	HaarFeature hf = hfs.get(triple.index);
-//        	ImageProcessor processor = imageProcessorForFeature(hf, imageProcessor);
-//        	String sliceLabel = triple.index + " : " + triple.value;
-//        	imageStack.addSlice(sliceLabel, processor);
-//        }
+        ImagePlus imagePlus = new ImagePlus("best features", imageStack);
+        imagePlus.show();
         
-	        for (int i = 0; i < slimFeatures.size(); i++)
-	        {
-	        	SlimFeature sf = slimFeatures.get(i);
-	        	ImageProcessor processor = imageProcessorForFeature(hfs.get(sf.featureNumber), imageProcessor);
-	        	String sliceLabel = sf.featureNumber + " : " + sf.alpha;
-	        	imageStack.addSlice(sliceLabel, processor);
-	        }
-	       
-    		float weightSum = 0.0f;
-        	float sum = 0.0f;
-    		for (SlimFeature slimFeature : slimFeatures)
-    		{
-    			HaarFeature hf = hfs.get(slimFeature.featureNumber);
-    			
-    			float v = slimFeature.alpha*ii.evaluate(hf);
-    			sum += v;
-    			weightSum += slimFeature.alpha;
-    		}
-    		
-    		boolean success = (sum >= weightSum*0.5f);
-    		IJ.log("image " + ii.name + " is a " +  success + " : " + sum + " > " + weightSum*0.5f);
+        int w = imageProcessor.getWidth();
+        int h = imageProcessor.getHeight();
+        
+        int faces = 0;
+        
+        for (int x = 0; x <= w-24 ; x++)
+        {
+        	for (int y = 0; y <= h-24; y++)
+        	{
+        		boolean success = isFaceInRegion(x,y,ii,strongClassifier);
+        		IJ.log("evaluating x,y " + x +", " + y + " : " + success);
+        		if (success)
+        		{
+        			
+        			faces++;
+        		}
+        	}
+        }
     	
+
+        IJ.log("I found " + faces + " face/faces");
         
-        ImagePlus out = new ImagePlus("aniamted tif", imageStack);
-        out.show();
+//        ImagePlus out = new ImagePlus("aniamted tif", imageStack);
+//        out.show();
     }
+    
+
+    private boolean isFaceInRegion(int x,int y,IntegralImage ii, Vector<HaarFeature> strongClassifier)
+    {
+    	int sum = 0;
+    	int weightSum = 0;
+    	for (HaarFeature weakClassifier : strongClassifier)
+    	{
+    		int d = ii.evaluateAsClassifier(weakClassifier,x,y);
+    		
+    		sum += d*weakClassifier.weight;
+    		weightSum += weakClassifier.weight;
+    	}
+    	
+    	return (sum*2 >= weightSum);
+    }
+    
     
     private ByteProcessor imageProcessorForFeature(HaarFeature hf, ImageProcessor I)
     {
@@ -153,27 +154,8 @@ public class ViolaJones_Plugin implements PlugInFilter
 
     	return i2;
     }
-//    private void testStaticFeatureList()
-//    {
-//    	
-//    	Vector<IntegralImage> falseSet = new Vector<IntegralImage>();
-//        Vector<IntegralImage> trueSet = new Vector<IntegralImage>();
-//        {
-//            File noDirectory =  new File("C:/Users/BOOBIES/Desktop/trainingData/no");
-//            File yesDirectory = new File("C:/Users/BOOBIES/Desktop/trainingData/yes");
-//            
-//            
-//            System.out.println("no directory = " + noDirectory);
-//            System.out.println("yes directory = " + yesDirectory);
-//            loadGifsAtDirectoryIntoVector(falseSet, noDirectory);
-//            loadGifsAtDirectoryIntoVector(trueSet, yesDirectory);
-//        }
-//        
-//
-//        
-//        
-//    }
-    
+
+
     private static void loadGifsAtDirectoryIntoVector(Vector<IntegralImage> images, File directory)
     {
         for (File file : directory.listFiles())

@@ -63,16 +63,26 @@ public class IntegralImage
         return ii(x0,y0) + ii(x1,y1) - (ii(x1,y0) + ii(x0,y1));
     }
     
+    public int evaluateAsClassifier(HaarFeature feature, int x, int y)
+    {
+    	int value = this.evaluate(feature,x,y);
+    	
+    	return (value >= feature.threshold ? 1 : 0);
+    }
     
+    public int evaluateAsClassifier(HaarFeature feature)
+    {
+    	return evaluateAsClassifier(feature,0,0);
+    }
     /*
      * Evaluate a HaarFeature on this image.
      */
-    public int evaluate(HaarFeature feature)
+    public int evaluate(HaarFeature feature, int xTrans, int yTrans)
     {
-        int accum = 0;
+    	int accum = 0;
         
-        int xOffset = feature.x;
-        int yOffset = feature.y;
+        int xOffset = feature.x + xTrans;
+        int yOffset = feature.y + yTrans;
         
         int width = feature.width;
         int height = feature.height;
@@ -100,6 +110,11 @@ public class IntegralImage
             }
         }
         return Math.abs(accum);
+    }
+    
+    public int evaluate(HaarFeature feature)
+    {
+        return evaluate(feature,0,0);
     }
     
 //    public HaarRectangle[] getRectangularRegionsForRegionWithTargetDimensions(int targetWidth, int targetHeight)
