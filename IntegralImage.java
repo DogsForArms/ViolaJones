@@ -5,13 +5,14 @@
  */
 
 import ij.process.ImageProcessor;
-
+import ij.IJ;
 /**
  * @author ethan
  */
 public class IntegralImage 
 {
     int[][] ii;
+    String name;
     
     public IntegralImage(ImageProcessor ip)
     {
@@ -35,12 +36,23 @@ public class IntegralImage
         {
             return 0;
         }
+        
+        if ( x == 24)
+        {
+        	x--;
+        }
+        if (y == 24)
+        {
+        	y--;
+        }
         return ii[y][x];
     }
     
     //where x1 > x0 and y1 > y0
     private int sumOfRectangle(int x0, int y0, int x1, int y1)
     {   
+    	
+//    	IJ.log("sumOfRectangle("+x0+","+y0+","+x1+","+y1+")");
        /*
         *      x0,y0        x1,y0
         *           
@@ -59,6 +71,9 @@ public class IntegralImage
     {
         int accum = 0;
         
+        int xOffset = feature.x;
+        int yOffset = feature.y;
+        
         int width = feature.width;
         int height = feature.height;
         int targetWidth = feature.targetWidth;
@@ -73,13 +88,13 @@ public class IntegralImage
             {
                 for (int x = 0; x < width; x++)
                 {
-                    int regionX = x*widthFactor;
-                    int regionY = y*heightFactor;
+                    int regionX = xOffset+x*widthFactor;
+                    int regionY = yOffset+y*heightFactor;
                     int regionWidth = widthFactor;
                     int regionHeight = heightFactor;
                     int regionPixel = pixels[y*width+x];
                     
-                    accum += (regionPixel == 0 ? -1 : 1) * sumOfRectangle(regionX, regionY, regionWidth, regionHeight);
+                    accum += (regionPixel == 0 ? -1 : 1) * sumOfRectangle(regionX, regionY, regionX+regionWidth, regionY+regionHeight);
                   
                 }
             }

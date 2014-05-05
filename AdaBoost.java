@@ -101,8 +101,9 @@ public class AdaBoost
             
             for (int j = 0; j < features.size(); j++)
             {
+            	// (first, second) -> (+,-)
                 Pair<Float, Float> total = new Pair<Float,Float>(sumWeight(weightsPositive), sumWeight(weightsNegative));
-                Pair<Float, Float> curr = new Pair<Float,Float>(0.0f,0.0f);
+                Pair<Float, Float> curr = new Pair<Float,Float>(0.0f,0.0f); 
                 
                 Vector<Triple> listOfTriples = featureValue.get(j);
                 for (int k = 0; k < listOfTriples.size(); k++)
@@ -111,7 +112,11 @@ public class AdaBoost
                     int index = triple.index;
                     float value = triple.value;
                     
+                    
+
+                    	     // 0 + (400 - 0)
                     float v1 = curr.first + (total.second - curr.second);
+                    	     // 0 + (400 - 0)
                     float v2 = curr.second + (total.first - curr.first);
                     
                     float currError = Math.min(v1, v2);
@@ -145,14 +150,18 @@ public class AdaBoost
             } //end j loop j < features.Size()
             
                     //update the weights
-			System.out.println("Current error at this step: " + error );
-			System.out.println("Current threshold at this step: " + threshold);
+			
 			float beta = error / (1 - error);	
 			float alpha = (float) Math.log( 1 / beta );	
-                
-                System.out.println("best feature = " + bestFeature);
-                Vector<Triple> bestFeatureVector = featureValue.get(bestFeature);
-                for(int k=0; k< bestFeatureVector.size(); k++) 
+			System.out.println();
+			System.out.println("Current error at this step: " + error );
+			System.out.println("Current threshold at this step: " + threshold);
+			System.out.println("Current alpha at this step: " + alpha);
+			System.out.println("best feature = " + bestFeature);
+			
+            
+				Vector<Triple> bestFeatureVector = featureValue.get(bestFeature);
+                for(int k=0; k < bestFeatureVector.size(); k++) 
                 {
 					Triple triple = bestFeatureVector.get(k);
 					float val = triple.value;

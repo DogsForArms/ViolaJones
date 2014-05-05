@@ -223,9 +223,10 @@ public class ViolaJones
                 for (height = sizeY; height < frameSize; height+=sizeY) 
                 {
                     /* each possible position given size */
-                    for (x = 0; x <= frameSize-width; x++) 
+                	//UNDO THIS AFTER TESTS
+                    for (x = 0; x+width < frameSize; x++) 
                     {
-                        for (y = 0; y <= frameSize-height; y++) 
+                        for (y = 0; y+height < frameSize; y++) 
                         {
                             //int result <- integralImage.evaluate(haarFeature) 
                             count++;
